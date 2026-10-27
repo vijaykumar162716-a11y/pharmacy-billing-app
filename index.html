@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<title>Pharmacy Billing App</title>
+<style>
+:root{--blue:#2563eb;--ink:#172033;--muted:#64748b;--bg:#f4f7fb;--line:#e2e8f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:#fff;padding:20px 16px 18px}
+header h1{margin:0;font-size:22px}header p{margin:6px 0 0;opacity:.9;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:650;color:#334155}
+.tabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px;box-shadow:0 2px 8px #0f172a08}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{padding:13px;border-radius:12px;background:#eff6ff}.metric small{display:block;color:var(--muted)}.metric strong{font-size:22px}
+h2{font-size:17px;margin:0 0 12px}label{display:block;font-size:13px;color:#475569;margin:8px 0 5px}
+input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:12px 14px;font-weight:700;font:inherit;cursor:pointer}.btn.secondary{background:#e2e8f0;color:#172033}.btn.danger{background:#fee2e2;color:#991b1b}.full{width:100%;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}th{color:#64748b;font-weight:650}
+.muted{color:var(--muted);font-size:13px}.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px}
+.hidden{display:none!important}.empty{padding:18px;text-align:center;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.contentgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.contentgrid .card{height:fit-content}}
+@media print{header,.tabs,.no-print{display:none!important}body{background:#fff}main{padding:0}.card{box-shadow:none;border:0}.print-only{display:block!important}}
+</style>
+</head>
+<body>
+<header><h1>💊 Pharmacy Billing App</h1><p>ऑफलाइन डेमो • Hindi + English • नया डेटाबेस</p></header>
+<main>
+<div class="tabs no-print">
+<button class="active" data-tab="home">Dashboard</button><button data-tab="products">Medicine Stock</button><button data-tab="purchase">Purchase Entry</button><button data-tab="billing">New Bill</button><button data-tab="history">Bill History</button><button data-tab="backup">Backup</button>
+</div>
+<section id="home" class="panel">
+<div class="grid">
+<div class="metric"><small>कुल दवाइयाँ / Products</small><strong id="mProducts">0</strong></div>
+<div class="metric"><small>कुल स्टॉक यूनिट</small><strong id="mStock">0</strong></div>
+<div class="metric"><small>आज की बिक्री / Sales</small><strong id="mSales">₹0</strong></div>
+<div class="metric"><small>बिल / Bills</small><strong id="mBills">0</strong></div>
+</div>
+<div class="card" style="margin-top:13px"><h2>Quick Start</h2><p class="muted">पहले Medicine Stock में दवाइयाँ जोड़ें, फिर New Bill से बिल बनाएं। यह डेटा इसी ब्राउज़र/डिवाइस में सेव होता है।</p><div class="actions"><button class="btn" onclick="tab('products')">+ दवा जोड़ें</button><button class="btn secondary" onclick="tab('billing')">नया बिल बनाएँ</button></div></div>
+<div class="card"><h2>ध्यान दें</h2><p class="muted">यह शुरुआती ऑफलाइन प्रोटोटाइप है। अभी GST रिपोर्टिंग, बारकोड, Cloud Sync, Windows साझा डेटाबेस और APK पैकेजिंग जोड़े/टेस्ट किए जाने बाकी हैं। वास्तविक बिक्री में इस्तेमाल करने से पहले इसकी जाँच कराएँ।</p></div>
+</section>
+<section id="products" class="panel hidden">
+<div class="contentgrid"><div class="card"><h2>दवा जोड़ें / Add Medicine</h2>
+<form id="productForm">
+<label>दवा का नाम / Generic name *</label><input id="pName" required list="medicineSuggestions" placeholder="जैसे Paracetamol 500mg" autocomplete="off">
+<datalist id="medicineSuggestions"></datalist>
+<div class="row"><div><label>बैच नंबर / Batch</label><input id="pBatch" placeholder="B-001"></div><div><label>Expiry (YYYY-MM)</label><input id="pExpiry" type="month"></div></div>
+<div class="row"><div><label>खरीद मूल्य ₹</label><input id="pCost" type="number" min="0" step=".01" value="0" required></div><div><label>बिक्री मूल्य ₹</label><input id="pPrice" type="number" min="0" step=".01" value="0" required></div></div>
+<div class="row"><div><label>GST %</label><select id="pGst"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select></div><div><label>मात्रा / Qty</label><input id="pQty" type="number" min="0" step="1" value="0" required></div></div>
+<button class="btn full" type="submit">Save Medicine</button></form></div>
+<div class="card"><h2>Medicine Stock</h2><input id="productSearch" placeholder="दवा खोजें..." oninput="renderProducts()"><div id="productTable"></div></div></div>
+</section>
+<section id="purchase" class="panel hidden"><div class="contentgrid">
+<div class="card"><h2>फोटो से Purchase Entry</h2><p class="muted">Supplier invoice या medicine strip/box की फोटो अपलोड करें। OCR टेक्स्ट निकालने की कोशिश करेगा। पहचान गलत हो सकती है—Save से पहले जाँचें।</p>
+<label>फोटो चुनें / Take photo or upload</label><input id="purchasePhoto" type="file" accept="image/*" capture="environment"><img id="purchasePreview" alt="Purchase photo preview" class="hidden" style="width:100%;max-height:260px;object-fit:contain;margin-top:10px;border-radius:12px">
+<div class="actions"><button class="btn secondary" type="button" id="readPhotoBtn">फोटो से टेक्स्ट पढ़ें / Read text</button></div><p id="ocrStatus" class="muted">OCR के लिए इंटरनेट आवश्यक है।</p><label>पहचाना गया टेक्स्ट (जाँचें)</label><textarea id="ocrText" rows="5" placeholder="फोटो से मिला टेक्स्ट यहाँ आएगा"></textarea></div>
+<div class="card"><h2>Purchase Details</h2><label>Supplier का नाम</label><input id="purSupplier" placeholder="Supplier name"><label>Invoice / Bill No.</label><input id="purInvoice" placeholder="Invoice number">
+<div class="row"><div><label>दवा का नाम *</label><input id="purName" required placeholder="Medicine name"></div><div><label>Batch No.</label><input id="purBatch" placeholder="Batch"></div></div>
+<div class="row"><div><label>Expiry</label><input id="purExpiry" type="month"></div><div><label>Qty *</label><input id="purQty" type="number" min="1" value="1" required></div></div>
+<div class="row"><div><label>खरीद मूल्य ₹ *</label><input id="purCost" type="number" min="0" step=".01" value="0" required></div><div><label>बिक्री मूल्य ₹</label><input id="purPrice" type="number" min="0" step=".01" value="0" required></div></div>
+<div class="row"><div><label>GST %</label><select id="purGst"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select></div><div><label>Invoice Date</label><input id="purDate" type="date"></div></div><button class="btn full" type="button" onclick="savePurchase()">Purchase Save करें और Stock Update करें</button></div></div>
+<div class="card"><h2>Purchase History</h2><div id="purchaseHistory" class="muted">अभी कोई purchase entry नहीं।</div></div></section>
+<section id="billing" class="panel hidden">
+<div class="contentgrid"><div class="card"><h2>नया बिल / New Bill</h2>
+<label>ग्राहक का नाम (वैकल्पिक)</label><input id="customer" placeholder="Customer name">
+<label>बिल का प्रकार</label><select id="billType"><option>Retail</option><option>Wholesale</option></select>
+<label>दवा चुनें</label><select id="billProduct"></select>
+<div class="row"><div><label>मात्रा / Qty</label><input id="billQty" type="number" min="1" value="1"></div><div><label>बिक्री मूल्य ₹</label><input id="billPrice" type="number" min="0" step=".01"></div></div>
+<button class="btn full" onclick="addLine()">+ बिल में जोड़ें</button><div id="cartTable"></div>
+<div class="row"><div><label>Discount ₹</label><input id="discount" type="number" min="0" value="0" oninput="renderCart()"></div><div><label>Payment</label><select id="payment"><option>Cash</option><option>UPI</option><option>Card</option><option>Credit</option></select></div></div>
+<button class="btn full" onclick="saveBill()">बिल सेव करें / Save Bill</button>
+</div><div class="card"><h2>बिल सारांश / Summary</h2><div id="cartSummary" class="muted">बिल में दवा जोड़ें।</div><p class="muted">डेमो बिल में चुनी गई दवाओं का GST दर शामिल है। औपचारिक GST invoice/HSN, CGST/SGST/IGST और compliance अभी लागू नहीं हैं।</p></div></div>
+</section>
+<section id="history" class="panel hidden"><div class="card"><h2>Bill History</h2><div id="billHistory"></div></div></section>
+<section id="backup" class="panel hidden"><div class="card"><h2>डेटा बैकअप / Backup</h2><p class="muted">अपने डिवाइस पर रखे डेटा की JSON बैकअप फ़ाइल डाउनलोड करें। ऐप का डेटा ब्राउज़र क्लियर करने पर मिट सकता है।</p><button class="btn" onclick="downloadBackup()">Download Backup</button><label>Backup restore (.json)</label><input type="file" id="restoreFile" accept=".json,application/json"><button class="btn secondary full" onclick="restoreBackup()">Restore Backup</button><p class="muted">बैकअप फ़ाइल सुरक्षित रखें। यह अभी Cloud Sync का विकल्प नहीं है।</p></div></section>
+</main>
+<script>
+const KEY='pharmacy_billing_starter_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"products":[],"bills":[]}'),cart=[];
+db.purchases=db.purchases||[];
+const medicineCatalog=[["Paracetamol 500 mg","Dolo 500"],["Paracetamol 650 mg","Dolo 650"],["Paracetamol","Crocin"],["Paracetamol","Calpol"],["Ibuprofen + Paracetamol","Combiflam"],["Cetirizine 10 mg","Okacet"],["Pantoprazole 40 mg","Pantocid"],["Pantoprazole + Domperidone","Pan-D"],["Azithromycin 500 mg","Azithral 500"],["Amoxicillin + Clavulanic acid","Augmentin"],["Cefixime","Taxim-O"],["Metformin","Glycomet"],["Amlodipine","Amlong"],["Telmisartan","Telma"],["Vitamin B complex","Becosules"],["Calcium + Vitamin D3","Shelcal"],["ORS","Electral"],["Montelukast + Levocetirizine","Montair-LC"],["Clotrimazole cream","Candid"]];
+
+function initSuggestions(){const meds=document.getElementById('medicineSuggestions');meds.innerHTML=[...new Set(medicineCatalog.map(x=>x[0]))].map(x=>`<option value="${x}">`).join('')}
+
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function tab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));if(id==='billing')fillBillProducts();if(id==='purchase')renderPurchases()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+document.getElementById('productForm').onsubmit=e=>{e.preventDefault();db.products.push({id:Date.now(),name:pName.value.trim(),batch:pBatch.value.trim(),expiry:pExpiry.value,cost:+pCost.value,price:+pPrice.value,gst:+pGst.value,qty:+pQty.value});e.target.reset();pCost.value=0;pPrice.value=0;pQty.value=0;save();alert('दवा सेव हो गई / Medicine saved')};
+let purchaseImageData='';
+document.getElementById('purchasePhoto').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){alert('कृपया image file चुनें।');return}const im=document.getElementById('purchasePreview');im.src=URL.createObjectURL(f);im.classList.remove('hidden')});
+function fillIfBlank(id,value){const el=document.getElementById(id);if(value!==undefined&&value!==null&&String(value).trim()&&!el.value.trim())el.value=String(value).trim()}
+function parsePurchaseOCR(raw){
+ const lines=raw.split(/\r?\n/).map(x=>x.replace(/[|]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+ const text=lines.join('\n');
+ let m;
+ m=text.match(/(?:invoice|inv\.?\s*no\.?|bill\s*no\.?|invoice\s*#)\s*[:#\-]?\s*([A-Z0-9\/-]+)/i);if(m)fillIfBlank('purInvoice',m[1]);
+ m=text.match(/(?:supplier|party|distributor|seller|pharma(?:ceutical)?s?)\s*[:\-]\s*([^\n]+)/i);if(m)fillIfBlank('purSupplier',m[1].slice(0,80));
+ m=text.match(/(?:batch|b\.?\s*no\.?|bno)\s*[:#\-]?\s*([A-Z0-9\/-]{2,})/i);if(m)fillIfBlank('purBatch',m[1]);
+ m=text.match(/(?:exp(?:iry)?)[.\s:#\-]*([0-1]?\d)[\/\-.](20\d{2}|\d{2})/i);if(m){let y=m[2].length===2?'20'+m[2]:m[2];let mo=String(+m[1]).padStart(2,'0');if(+mo>=1&&+mo<=12)fillIfBlank('purExpiry',y+'-'+mo)}
+ m=text.match(/(?:qty|quantity|units?)\s*[:\-]?\s*(\d+(?:\.\d+)?)/i);if(m)fillIfBlank('purQty',m[1]);
+ m=text.match(/(?:purchase\s*rate|rate|ptr|cost|net\s*rate|unit\s*price)\s*[:₹Rs.\s]*([0-9]+(?:\.[0-9]{1,2})?)/i);if(m)fillIfBlank('purCost',m[1]);
+ m=text.match(/(?:mrp|retail\s*price|selling\s*price)\s*[:₹Rs.\s]*([0-9]+(?:\.[0-9]{1,2})?)/i);if(m)fillIfBlank('purPrice',m[1]);
+ m=text.match(/(?:gst|tax)\s*[:@\s]*(5|12|18|28|0)(?:\s*%|\b)/i);if(m)document.getElementById('purGst').value=m[1];
+ m=text.match(/(?:date|dated|invoice date)\s*[:\-]?\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/i);if(m){let y=m[3].length===2?'20'+m[3]:m[3];fillIfBlank('purDate',y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0'))}
+ // Pick a plausible medicine line; avoid invoice metadata and totals.
+ if(!document.getElementById('purName').value.trim()){
+  const candidate=lines.find(line=>line.length>=4 && line.length<=90 && /\b(tablet|tab\.?|capsule|cap\.?|syrup|suspension|injection|cream|ointment|drops|mg|mcg|ml|g\b|\d+\/\d+)\b/i.test(line) && !/(invoice|supplier|distributor|batch|expiry|mrp|amount|total|gst|qty|quantity|address|phone|date|rate|tax|discount)/i.test(line));
+  if(candidate)document.getElementById('purName').value=candidate.replace(/\s{2,}/g,' ').slice(0,90);
+ }
+ return ['purSupplier','purInvoice','purName','purBatch','purExpiry','purQty','purCost','purPrice','purDate'].filter(id=>document.getElementById(id).value.trim()).length;
+}
+document.getElementById('readPhotoBtn').addEventListener('click',async()=>{const f=document.getElementById('purchasePhoto').files[0];if(!f){alert('पहले बिल या दवा की फोटो चुनें।');return}const status=document.getElementById('ocrStatus');status.textContent='OCR लाइब्रेरी लोड हो रही है…';try{if(!window.Tesseract){await new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=resolve;sc.onerror=()=>reject(new Error('OCR library load नहीं हुई'));document.head.appendChild(sc)})}status.textContent='फोटो पढ़ी जा रही है…';const result=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status)status.textContent=m.status+(m.progress!=null?' '+Math.round(m.progress*100)+'%':'')}});const txt=(result.data.text||'').trim();document.getElementById('ocrText').value=txt;if(!txt){status.textContent='फोटो से टेक्स्ट नहीं मिला। साफ़, सीधी और रोशनी वाली फोटो लें।';return}const count=parsePurchaseOCR(txt);status.textContent=count?`टेक्स्ट पढ़ा गया और उपलब्ध जानकारी Purchase Entry में भरी गई (${count} फ़ील्ड)। सभी फ़ील्ड बिल से मिलाकर जाँचें; जो नहीं पढ़ा गया उसे स्वयं भरें।`:'टेक्स्ट पढ़ा गया, लेकिन फ़ील्ड अपने-आप पहचान नहीं पाए। नीचे टेक्स्ट देखें और जानकारी स्वयं भरें।';}catch(err){status.textContent='ऑटोमेटिक टेक्स्ट नहीं पढ़ पाया: '+err.message+'. इंटरनेट जाँचें या फोटो देखकर फ़ील्ड भरें।'}});
+function savePurchase(){const name=purName.value.trim(),qty=Number(purQty.value),cost=Number(purCost.value),price=Number(purPrice.value);if(!name||!Number.isFinite(qty)||qty<1||cost<0||price<0){alert('दवा का नाम, सही Qty और कीमत भरें।');return}const prod=db.products.find(p=>p.name.toLowerCase()===name.toLowerCase()&&(p.batch||'')===purBatch.value.trim());if(prod){prod.qty=Number(prod.qty||0)+qty;prod.cost=cost;prod.price=price;prod.gst=Number(purGst.value);if(purExpiry.value)prod.expiry=purExpiry.value}else db.products.push({id:Date.now(),name,batch:purBatch.value.trim(),expiry:purExpiry.value,cost,price,gst:Number(purGst.value),qty});db.purchases.push({id:Date.now(),supplier:purSupplier.value.trim(),invoice:purInvoice.value.trim(),name,batch:purBatch.value.trim(),expiry:purExpiry.value,qty,cost,price,gst:Number(purGst.value),date:purDate.value||new Date().toISOString().slice(0,10),ocrText:ocrText.value});save();renderPurchases();alert('Purchase entry सेव हुई और stock अपडेट हुआ। Invoice से मिलान कर लें।')}
+function renderPurchases(){const el=document.getElementById('purchaseHistory');if(!el)return;const ps=(db.purchases||[]).slice().reverse();el.innerHTML=ps.length?'<table><thead><tr><th>Date / Invoice</th><th>Supplier</th><th>Medicine</th><th>Qty</th><th>Cost</th></tr></thead><tbody>'+ps.map(x=>`<tr><td>${esc(x.date)}<br>${esc(x.invoice||'')}</td><td>${esc(x.supplier||'')}</td><td>${esc(x.name)}<br><span class="muted">${esc(x.batch||'')} ${x.expiry?'• '+esc(x.expiry):''}</span></td><td>${x.qty}</td><td>${money(x.cost)}</td></tr>`).join('')+'</tbody></table>':'अभी कोई purchase entry नहीं।'}
+function renderProducts(){let q=(productSearch.value||'').toLowerCase();let ps=db.products.filter(p=>p.name.toLowerCase().includes(q));productTable.innerHTML=ps.length?'<table><thead><tr><th>दवा</th><th>Qty</th><th>Price</th><th></th></tr></thead><tbody>'+ps.map(p=>`<tr><td><strong>${esc(p.name)}</strong><br><span class="muted">${esc(p.batch||'')} ${p.expiry?'• '+p.expiry:''}</span></td><td>${p.qty}</td><td>${money(p.price)}</td><td><button class="btn danger" onclick="delProduct(${p.id})">×</button></td></tr>`).join('')+'</tbody></table>':'<div class="empty">अभी कोई दवा नहीं है।</div>';fillBillProducts()}
+function delProduct(id){if(confirm('इस दवा को हटाएँ?')){db.products=db.products.filter(p=>p.id!==id);save()}}
+function fillBillProducts(){if(!billProduct)return;let old=billProduct.value;billProduct.innerHTML='<option value="">दवा चुनें...</option>'+db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — स्टॉक ${p.qty} — ${money(p.price)}</option>`).join('');if(db.products.some(p=>String(p.id)===old))billProduct.value=old;updatePrice()}
+function updatePrice(){let p=db.products.find(p=>p.id==billProduct.value);billPrice.value=p?p.price:''}
+billProduct.onchange=updatePrice;
+function addLine(){let p=db.products.find(p=>p.id==billProduct.value),qty=+billQty.value,price=+billPrice.value;if(!p)return alert('पहले दवा चुनें');if(qty<1||!Number.isFinite(qty))return alert('मात्रा सही भरें');if(qty>p.qty)return alert('स्टॉक पर्याप्त नहीं है');let existing=cart.find(x=>x.id===p.id&&x.price===price);if(existing){if(existing.qty+qty>p.qty)return alert('स्टॉक पर्याप्त नहीं है');existing.qty+=qty}else cart.push({id:p.id,name:p.name,qty,price,gst:p.gst});renderCart()}
+function renderCart(){let sub=cart.reduce((s,x)=>s+x.qty*x.price,0),gst=cart.reduce((s,x)=>s+x.qty*x.price*x.gst/100,0),disc=Math.max(0,+discount.value||0),total=Math.max(0,sub+gst-disc);cartTable.innerHTML=cart.length?'<table><thead><tr><th>दवा</th><th>Qty</th><th>Amount</th></tr></thead><tbody>'+cart.map(x=>`<tr><td>${esc(x.name)}<br><span class="muted">GST ${x.gst}%</span></td><td>${x.qty}</td><td>${money(x.qty*x.price)}</td></tr>`).join('')+'</tbody></table><button class="btn secondary full" onclick="cart=[];renderCart()">Clear Cart</button>':'';cartSummary.innerHTML=cart.length?`Subtotal: ${money(sub)}<br>Indicative GST: ${money(gst)}<br>Discount: ${money(disc)}<hr><strong style="font-size:22px">${money(total)}</strong>`:'बिल में दवा जोड़ें।'}
+function saveBill(){if(!cart.length)return alert('बिल में दवा जोड़ें');let items=cart.map(x=>({...x}));for(let x of items){let p=db.products.find(p=>p.id===x.id);if(!p||p.qty<x.qty)return alert('स्टॉक बदल गया है; मात्रा जाँचें।')}let sub=items.reduce((s,x)=>s+x.qty*x.price,0),gst=items.reduce((s,x)=>s+x.qty*x.price*x.gst/100,0),disc=Math.max(0,+discount.value||0);let bill={id:Date.now(),number:'PH-'+String(db.bills.length+1).padStart(5,'0'),date:new Date().toISOString(),customer:customer.value.trim(),type:billType.value,payment:payment.value,items,subtotal:sub,gst,discount:disc,total:Math.max(0,sub+gst-disc)};items.forEach(x=>{db.products.find(p=>p.id===x.id).qty-=x.qty});db.bills.unshift(bill);cart=[];customer.value='';discount.value=0;save();renderCart();alert('बिल सेव हुआ: '+bill.number);printBill(bill)}
+function printBill(b){let w=window.open('','_blank');if(!w){alert('Print के लिए browser popup अनुमति दें।');return}w.document.write(`<html><head><title>${b.number}</title><style>body{font:14px Arial;padding:16px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}</style></head><body><h2>Pharmacy Billing App</h2><p>Bill: ${b.number}<br>Date: ${new Date(b.date).toLocaleString()}<br>Customer: ${esc(b.customer||'Walk-in')}<br>Type: ${b.type}</p><table><tr><th>Medicine</th><th>Qty</th><th>Price</th><th>Amount</th></tr>${b.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.price)}</td><td>${money(x.qty*x.price)}</td></tr>`).join('')}</table><p>Subtotal: ${money(b.subtotal)}<br>Indicative GST: ${money(b.gst)}<br>Discount: ${money(b.discount)}<h3>Total: ${money(b.total)}</h3>Payment: ${b.payment}</p><button onclick="print()">Print</button></body></html>`);w.document.close()}
+function renderHistory(){billHistory.innerHTML=db.bills.length?db.bills.map(b=>`<div style="padding:12px 0;border-bottom:1px solid #e2e8f0"><strong>${b.number}</strong> • ${new Date(b.date).toLocaleDateString()}<br>${esc(b.customer||'Walk-in')} • ${b.items.length} item(s)<br><strong>${money(b.total)}</strong> <button class="btn secondary" onclick="reprint(${b.id})">Print</button></div>`).join(''):'<div class="empty">अभी कोई बिल नहीं है।</div>'}
+function reprint(id){let b=db.bills.find(x=>x.id===id);if(b)printBill(b)}
+function renderAll(){mProducts.textContent=db.products.length;mStock.textContent=db.products.reduce((s,p)=>s+p.qty,0);let today=new Date().toDateString();mSales.textContent=money(db.bills.filter(b=>new Date(b.date).toDateString()===today).reduce((s,b)=>s+b.total,0));mBills.textContent=db.bills.length;renderProducts();renderHistory();renderCart();renderPurchases()}
+function downloadBackup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pharmacy-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function restoreBackup(){let f=restoreFile.files[0];if(!f)return alert('पहले backup JSON फ़ाइल चुनें');let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.products)||!Array.isArray(d.bills))throw 0;if(!confirm('मौजूदा डेटा replace होगा। जारी रखें?'))return;db=d;save();alert('Backup restore हुआ')}catch(e){alert('यह मान्य Pharmacy backup नहीं है')}};r.readAsText(f)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+initSuggestions();renderAll();
+</script>
+</body></html>
